@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Register | Student Planner
+{% endblock %}
+
+{% block content %}
+<div class="card auth-card">
+    <div class="card-body p-4 p-md-5">
+        <h1 class="h3 mb-3">Create an account</h1>
+
+        <p class="text-secondary">
+            Create an account to manage your academic workload.
+        </p>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <div class="form-text">
+                            {{ field.help_text|safe }}
+                        </div>
+                    {% endif %}
+
+                    {% for error in field.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button
+                type="submit"
+                class="btn btn-primary w-100"
+            >
+                Create account
+            </button>
+        </form>
+
+        <p class="mt-4 mb-0 text-center">
+            Already have an account?
+
+            <a href="{% url 'login' %}">
+                Log in
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}

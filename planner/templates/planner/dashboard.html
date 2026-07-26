@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Dashboard | Student Planner
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Dashboard</h1>
+
+        <p class="text-secondary mb-0">
+            Welcome back, {{ user.username }}.
+        </p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card summary-card h-100">
+            <div class="card-body">
+                <div class="text-secondary">Active courses</div>
+
+                <div class="display-6 fw-semibold">
+                    {{ course_count }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card summary-card h-100">
+            <div class="card-body">
+                <div class="text-secondary">All tasks</div>
+
+                <div class="display-6 fw-semibold">
+                    {{ task_count }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card summary-card h-100">
+            <div class="card-body">
+                <div class="text-secondary">Completed</div>
+
+                <div class="display-6 fw-semibold text-success">
+                    {{ completed_task_count }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card summary-card h-100">
+            <div class="card-body">
+                <div class="text-secondary">Overdue</div>
+
+                <div class="display-6 fw-semibold text-danger">
+                    {{ overdue_task_count }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card summary-card h-100">
+            <div class="card-header bg-white fw-semibold">
+                Due today
+            </div>
+
+            <div class="list-group list-group-flush">
+                {% for task in tasks_due_today %}
+                    <div class="list-group-item">
+                        <div class="fw-semibold">
+                            {{ task.title }}
+                        </div>
+
+                        <small class="text-secondary">
+                            {{ task.course.code }}
+
+                            {% if task.due_date %}
+                                · {{ task.due_date|date:"H:i" }}
+                            {% endif %}
+                        </small>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-secondary">
+                        No tasks are due today.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card summary-card h-100">
+            <div class="card-header bg-white fw-semibold">
+                Overdue tasks
+            </div>
+
+            <div class="list-group list-group-flush">
+                {% for task in overdue_tasks %}
+                    <div class="list-group-item task-overdue">
+                        <div class="fw-semibold">
+                            {{ task.title }}
+                        </div>
+
+                        <small class="text-danger">
+                            {{ task.course.code }}
+                            · Due {{ task.due_date|date:"d M Y H:i" }}
+                        </small>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-secondary">
+                        No overdue tasks.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card summary-card h-100">
+            <div class="card-header bg-white fw-semibold">
+                Due in the next seven days
+            </div>
+
+            <div class="list-group list-group-flush">
+                {% for task in tasks_due_soon %}
+                    <div class="list-group-item">
+                        <div class="fw-semibold">
+                            {{ task.title }}
+                        </div>
+
+                        <small class="text-secondary">
+                            {{ task.course.code }}
+                            · {{ task.due_date|date:"d M Y H:i" }}
+                        </small>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-secondary">
+                        No upcoming tasks.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card summary-card h-100">
+            <div class="card-header bg-white fw-semibold">
+                Upcoming assessments
+            </div>
+
+            <div class="list-group list-group-flush">
+                {% for assessment in upcoming_assessments %}
+                    <div class="list-group-item">
+                        <div class="fw-semibold">
+                            {{ assessment.title }}
+                        </div>
+
+                        <small class="text-secondary">
+                            {{ assessment.course.code }}
+                            · {{ assessment.due_date|date:"d M Y H:i" }}
+                        </small>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-secondary">
+                        No upcoming assessments.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
