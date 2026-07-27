@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Assessment, Course
+from .models import Assessment, Course, StudyTask
 
 
 class RegisterForm(UserCreationForm):
@@ -207,6 +207,144 @@ class AssessmentForm(forms.ModelForm):
                 "course",
                 "The selected course does not belong to you.",
             )
+
+        if start_date and due_date and start_date > due_date:
+            self.add_error(
+                "start_date",
+                "Start date cannot be after the due date.",
+            )
+
+        return cleaned_data
+
+class StudyTaskForm(forms.ModelForm):
+    """Form used to create and update a study task."""
+
+    class Meta:
+        model = StudyTask
+        fields = (
+            "course",
+            "assessment",
+            "title",
+            "description",
+            "priority",
+            "status",
+            "start_date",
+            "due_date",
+            "estimated_hours",
+        )
+        widgets = {
+            "course": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "assessment": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "title": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "For example: Write report introduction",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                    "placeholder": "Optional task description",
+                }
+            ),
+            "priority": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "status": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "start_date": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local",
+                },
+            ),
+            "due_date": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local",
+                },
+            ),
+            "estimated_hours": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "step": "0.25",
+                    "placeholder": "For example: 2.5",
+                }
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+        self.fields["start_date"].input_formats = [
+            "%Y-%m-%dT%H:%M"
+        ]
+        self.fields["due_date"].input_formats = [
+            "%Y-%m-%dT%H:%M"
+        ]
+
+        self.fields["assessment"].required = False
+        self.fields["assessment"].help_text = (
+            "Optional. The assessment must belong to the selected course."
+        )
+
+        if user is None:
+            self.fields["course"].queryset = Course.objects.none()
+            self.fields["assessment"].queryset = (
+                Assessment.objects.none()
+            )
+        else:
+            self.fields["course"].queryset = Course.objects.filter(
+                owner=user,
+            ).order_by(
+                "is_archived",
+                "code",
+            )
+
+            self.fields["assessment"].queryset = (
+                Assessment.objects.filter(
+                    owner=user,
+                )
+                .select_related("course")
+                .order_by("due_date", "title")
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        course = cleaned_data.get("course")
+        assessment = cleaned_data.get("assessment")
+        start_date = cleaned_data.get("start_date")
+        due_date = cleaned_data.get("due_date")
+
+        if course and course.owner != self.user:
+            self.add_error(
+                "course",
+                "The selected course does not belong to you.",
+            )
+
+        if assessment:
+            if assessment.owner != self.user:
+                self.add_error(
+                    "assessment",
+                    "The selected assessment does not belong to you.",
+                )
+
+            if course and assessment.course_id != course.id:
+                self.add_error(
+                    "assessment",
+                    "The assessment must belong to the selected course.",
+                )
 
         if start_date and due_date and start_date > due_date:
             self.add_error(

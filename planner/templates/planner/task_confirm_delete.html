@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Delete study task | Student Planner
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card summary-card">
+            <div class="card-body p-4">
+                <h1 class="h3 text-danger">
+                    Delete study task
+                </h1>
+
+                <p>
+                    Are you sure you want to delete
+                    <strong>{{ task.title }}</strong>?
+                </p>
+
+                <p class="text-secondary">
+                    Course: {{ task.course.code }}
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger"
+                    >
+                        Delete task
+                    </button>
+
+                    <a
+                        class="btn btn-outline-secondary"
+                        href="{% url 'task_list' %}"
+                    >
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

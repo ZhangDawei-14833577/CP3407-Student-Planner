@@ -6,7 +6,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import AssessmentForm, CourseForm, RegisterForm
+from .forms import (
+    AssessmentForm,
+    CourseForm,
+    RegisterForm,
+    StudyTaskForm,
+)
 from .models import Assessment, Course, StudyTask
 
 
@@ -359,4 +364,186 @@ def assessment_delete(request, pk):
         request,
         "planner/assessment_confirm_delete.html",
         {"assessment": assessment},
+    )
+
+def _update_task_completion_time(task):
+    """Set or clear the task completion timestamp."""
+
+    if task.status == StudyTask.Status.COMPLETED:
+        if task.completed_at is None:
+            task.completed_at = timezone.now()
+    else:
+        task.completed_at = None
+
+
+@login_required
+def task_list(request):
+    """Display and filter study tasks belonging to the user."""
+
+    tasks = StudyTask.objects.filter(
+        owner=request.user,
+    ).select_related(
+        "course",
+        "assessment",
+    )
+
+    selected_course = request.GET.get("course", "")
+    selected_status = request.GET.get("status", "")
+    selected_priority = request.GET.get("priority", "")
+
+    if selected_course.isdigit():
+        tasks = tasks.filter(course_id=selected_course)
+
+    if selected_status in StudyTask.Status.values:
+        tasks = tasks.filter(status=selected_status)
+
+    if selected_priority in StudyTask.Priority.values:
+        tasks = tasks.filter(priority=selected_priority)
+
+    tasks = tasks.order_by("due_date", "title")
+
+    courses = Course.objects.filter(
+        owner=request.user,
+        is_archived=False,
+    ).order_by("code")
+
+    context = {
+        "tasks": tasks,
+        "courses": courses,
+        "status_choices": StudyTask.Status.choices,
+        "priority_choices": StudyTask.Priority.choices,
+        "selected_course": selected_course,
+        "selected_status": selected_status,
+        "selected_priority": selected_priority,
+    }
+
+    return render(
+        request,
+        "planner/task_list.html",
+        context,
+    )
+
+
+@login_required
+def task_create(request):
+    """Create a study task for the logged-in user."""
+
+    if not Course.objects.filter(
+        owner=request.user,
+        is_archived=False,
+    ).exists():
+        messages.warning(
+            request,
+            "Create an active course before adding a study task.",
+        )
+        return redirect("course_create")
+
+    if request.method == "POST":
+        form = StudyTaskForm(
+            request.POST,
+            user=request.user,
+        )
+
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.owner = request.user
+
+            _update_task_completion_time(task)
+
+            task.save()
+
+            messages.success(
+                request,
+                f"{task.title} was created successfully.",
+            )
+
+            return redirect("task_list")
+    else:
+        form = StudyTaskForm(user=request.user)
+
+    return render(
+        request,
+        "planner/task_form.html",
+        {
+            "form": form,
+            "page_title": "Add study task",
+            "button_text": "Create task",
+        },
+    )
+
+
+@login_required
+def task_update(request, pk):
+    """Update a study task belonging to the logged-in user."""
+
+    task = get_object_or_404(
+        StudyTask,
+        pk=pk,
+        owner=request.user,
+    )
+
+    if request.method == "POST":
+        form = StudyTaskForm(
+            request.POST,
+            instance=task,
+            user=request.user,
+        )
+
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.owner = request.user
+
+            _update_task_completion_time(task)
+
+            task.save()
+
+            messages.success(
+                request,
+                f"{task.title} was updated successfully.",
+            )
+
+            return redirect("task_list")
+    else:
+        form = StudyTaskForm(
+            instance=task,
+            user=request.user,
+        )
+
+    return render(
+        request,
+        "planner/task_form.html",
+        {
+            "form": form,
+            "task": task,
+            "page_title": "Edit study task",
+            "button_text": "Save changes",
+        },
+    )
+
+
+@login_required
+def task_delete(request, pk):
+    """Delete a study task belonging to the logged-in user."""
+
+    task = get_object_or_404(
+        StudyTask,
+        pk=pk,
+        owner=request.user,
+    )
+
+    if request.method == "POST":
+        task_title = task.title
+        task.delete()
+
+        messages.success(
+            request,
+            f"{task_title} was deleted successfully.",
+        )
+
+        return redirect("task_list")
+
+    return render(
+        request,
+        "planner/task_confirm_delete.html",
+        {"task": task},
     )
