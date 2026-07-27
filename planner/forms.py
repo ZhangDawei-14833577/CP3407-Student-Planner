@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Course
+from .models import Assessment, Course
 
 
 class RegisterForm(UserCreationForm):
@@ -112,3 +112,106 @@ class CourseForm(forms.ModelForm):
             )
 
         return code
+
+class AssessmentForm(forms.ModelForm):
+    """Form used to create and update an assessment."""
+
+    class Meta:
+        model = Assessment
+        fields = (
+            "course",
+            "title",
+            "assessment_type",
+            "status",
+            "start_date",
+            "due_date",
+            "weighting",
+            "notes",
+        )
+        widgets = {
+            "course": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "title": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "For example: Software Project",
+                }
+            ),
+            "assessment_type": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "status": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "start_date": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local",
+                },
+            ),
+            "due_date": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local",
+                },
+            ),
+            "weighting": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "max": "100",
+                    "step": "0.01",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                }
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+        self.fields["start_date"].input_formats = [
+            "%Y-%m-%dT%H:%M"
+        ]
+        self.fields["due_date"].input_formats = [
+            "%Y-%m-%dT%H:%M"
+        ]
+
+        if user is None:
+            self.fields["course"].queryset = Course.objects.none()
+        else:
+            self.fields["course"].queryset = Course.objects.filter(
+                owner=user,
+            ).order_by(
+                "is_archived",
+                "code",
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        course = cleaned_data.get("course")
+        start_date = cleaned_data.get("start_date")
+        due_date = cleaned_data.get("due_date")
+
+        if course and course.owner != self.user:
+            self.add_error(
+                "course",
+                "The selected course does not belong to you.",
+            )
+
+        if start_date and due_date and start_date > due_date:
+            self.add_error(
+                "start_date",
+                "Start date cannot be after the due date.",
+            )
+
+        return cleaned_data

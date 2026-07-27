@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Assessments | Student Planner
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Assessments</h1>
+
+        <p class="text-secondary mb-0">
+            Manage assignments, examinations, projects and quizzes.
+        </p>
+    </div>
+
+    <a
+        class="btn btn-primary"
+        href="{% url 'assessment_create' %}"
+    >
+        Add assessment
+    </a>
+</div>
+
+<div class="card summary-card">
+    {% if assessments %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Assessment</th>
+                        <th>Course</th>
+                        <th>Type</th>
+                        <th>Due date</th>
+                        <th>Weighting</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for assessment in assessments %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">
+                                    {{ assessment.title }}
+                                </div>
+
+                                {% if assessment.is_overdue %}
+                                    <span class="badge text-bg-danger">
+                                        Overdue
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ assessment.course.code }}
+                            </td>
+
+                            <td>
+                                {{ assessment.get_assessment_type_display }}
+                            </td>
+
+                            <td>
+                                {{ assessment.due_date|date:"d M Y H:i" }}
+                            </td>
+
+                            <td>
+                                {% if assessment.weighting is not None %}
+                                    {{ assessment.weighting }}%
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if assessment.status == "completed" %}
+                                    <span class="badge text-bg-success">
+                                        {{ assessment.get_status_display }}
+                                    </span>
+                                {% elif assessment.status == "in_progress" %}
+                                    <span class="badge text-bg-primary">
+                                        {{ assessment.get_status_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">
+                                        {{ assessment.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end">
+                                <a
+                                    class="btn btn-outline-primary btn-sm"
+                                    href="{% url 'assessment_update' assessment.pk %}"
+                                >
+                                    Edit
+                                </a>
+
+                                <a
+                                    class="btn btn-outline-danger btn-sm"
+                                    href="{% url 'assessment_delete' assessment.pk %}"
+                                >
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body text-center py-5">
+            <h2 class="h5">No assessments yet</h2>
+
+            <p class="text-secondary">
+                Add an assessment to start tracking academic deadlines.
+            </p>
+
+            <a
+                class="btn btn-primary"
+                href="{% url 'assessment_create' %}"
+            >
+                Add your first assessment
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Delete assessment | Student Planner
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card summary-card">
+            <div class="card-body p-4">
+                <h1 class="h3 text-danger">
+                    Delete assessment
+                </h1>
+
+                <p>
+                    Are you sure you want to delete
+                    <strong>{{ assessment.title }}</strong>
+                    from
+                    <strong>{{ assessment.course.code }}</strong>?
+                </p>
+
+                <div class="alert alert-warning">
+                    Study tasks linked to this assessment will remain,
+                    but they will no longer be connected to it.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger"
+                    >
+                        Delete assessment
+                    </button>
+
+                    <a
+                        class="btn btn-outline-secondary"
+                        href="{% url 'assessment_list' %}"
+                    >
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -27,4 +27,24 @@ urlpatterns = [
         views.course_delete,
         name="course_delete",
     ),
+        path(
+        "assessments/",
+        views.assessment_list,
+        name="assessment_list",
+    ),
+    path(
+        "assessments/add/",
+        views.assessment_create,
+        name="assessment_create",
+    ),
+    path(
+        "assessments/<int:pk>/edit/",
+        views.assessment_update,
+        name="assessment_update",
+    ),
+    path(
+        "assessments/<int:pk>/delete/",
+        views.assessment_delete,
+        name="assessment_delete",
+    ),
 ]

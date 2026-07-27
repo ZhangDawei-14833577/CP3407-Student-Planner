@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import CourseForm, RegisterForm
+from .forms import AssessmentForm, CourseForm, RegisterForm
 from .models import Assessment, Course, StudyTask
 
 
@@ -226,4 +226,137 @@ def course_delete(request, pk):
         request,
         "planner/course_confirm_delete.html",
         {"course": course},
+    )
+
+@login_required
+def assessment_list(request):
+    """Display assessments belonging to the logged-in user."""
+
+    assessments = Assessment.objects.filter(
+        owner=request.user,
+    ).select_related(
+        "course",
+    ).order_by(
+        "due_date",
+        "title",
+    )
+
+    return render(
+        request,
+        "planner/assessment_list.html",
+        {"assessments": assessments},
+    )
+
+
+@login_required
+def assessment_create(request):
+    """Create an assessment for the logged-in user."""
+
+    if not Course.objects.filter(owner=request.user).exists():
+        messages.warning(
+            request,
+            "Create a course before adding an assessment.",
+        )
+        return redirect("course_create")
+
+    if request.method == "POST":
+        form = AssessmentForm(
+            request.POST,
+            user=request.user,
+        )
+
+        if form.is_valid():
+            assessment = form.save(commit=False)
+            assessment.owner = request.user
+            assessment.save()
+
+            messages.success(
+                request,
+                f"{assessment.title} was created successfully.",
+            )
+
+            return redirect("assessment_list")
+    else:
+        form = AssessmentForm(user=request.user)
+
+    return render(
+        request,
+        "planner/assessment_form.html",
+        {
+            "form": form,
+            "page_title": "Add assessment",
+            "button_text": "Create assessment",
+        },
+    )
+
+
+@login_required
+def assessment_update(request, pk):
+    """Update an assessment belonging to the logged-in user."""
+
+    assessment = get_object_or_404(
+        Assessment,
+        pk=pk,
+        owner=request.user,
+    )
+
+    if request.method == "POST":
+        form = AssessmentForm(
+            request.POST,
+            instance=assessment,
+            user=request.user,
+        )
+
+        if form.is_valid():
+            assessment = form.save()
+
+            messages.success(
+                request,
+                f"{assessment.title} was updated successfully.",
+            )
+
+            return redirect("assessment_list")
+    else:
+        form = AssessmentForm(
+            instance=assessment,
+            user=request.user,
+        )
+
+    return render(
+        request,
+        "planner/assessment_form.html",
+        {
+            "form": form,
+            "assessment": assessment,
+            "page_title": "Edit assessment",
+            "button_text": "Save changes",
+        },
+    )
+
+
+@login_required
+def assessment_delete(request, pk):
+    """Delete an assessment belonging to the logged-in user."""
+
+    assessment = get_object_or_404(
+        Assessment,
+        pk=pk,
+        owner=request.user,
+    )
+
+    if request.method == "POST":
+        assessment_title = assessment.title
+        assessment.delete()
+
+        messages.success(
+            request,
+            f"{assessment_title} was deleted successfully.",
+        )
+
+        return redirect("assessment_list")
+
+    return render(
+        request,
+        "planner/assessment_confirm_delete.html",
+        {"assessment": assessment},
     )
