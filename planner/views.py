@@ -366,14 +366,6 @@ def assessment_delete(request, pk):
         {"assessment": assessment},
     )
 
-def _update_task_completion_time(task):
-    """Set or clear the task completion timestamp."""
-
-    if task.status == StudyTask.Status.COMPLETED:
-        if task.completed_at is None:
-            task.completed_at = timezone.now()
-    else:
-        task.completed_at = None
 
 
 @login_required
@@ -448,7 +440,7 @@ def task_create(request):
             task = form.save(commit=False)
             task.owner = request.user
 
-            _update_task_completion_time(task)
+            task.sync_completion_time()
 
             task.save()
 

@@ -87,7 +87,7 @@ This project is being developed by one student.
 - [ ] Project proposal completed
 - [ ] Initial backlog reviewed
 - [ ] Target-user interviews completed
-- [ ] Iteration 1 started
+- [x] Iteration 1 started
 - [ ] Core application implemented
 - [ ] Automated testing completed
 - [ ] Final application deployed

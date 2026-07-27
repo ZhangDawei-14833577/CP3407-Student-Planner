@@ -244,6 +244,15 @@ class StudyTask(models.Model):
         if errors:
             raise ValidationError(errors)
 
+    def sync_completion_time(self):
+        """Synchronise completed_at with the current task status."""
+
+        if self.status == self.Status.COMPLETED:
+            if self.completed_at is None:
+                self.completed_at = timezone.now()
+        else:
+            self.completed_at = None
+
     @property
     def is_overdue(self):
         return (
