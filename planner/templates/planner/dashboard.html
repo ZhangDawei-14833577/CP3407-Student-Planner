@@ -65,6 +65,130 @@
     </div>
 </div>
 
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card summary-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">Task progress</h2>
+
+                        <p class="text-secondary mb-0">
+                            Your current study-task completion summary.
+                        </p>
+                    </div>
+
+                    <div class="display-6 fw-semibold text-success">
+                        {{ completion_rate }}%
+                    </div>
+                </div>
+
+                <progress
+                    class="w-100 mb-4"
+                    value="{{ completion_rate }}"
+                    max="100"
+                    aria-label="Task completion rate"
+                >
+                    {{ completion_rate }}%
+                </progress>
+
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h4 mb-1">
+                            {{ todo_task_count }}
+                        </div>
+
+                        <div class="text-secondary">
+                            To do
+                        </div>
+                    </div>
+
+                    <div class="col-4">
+                        <div class="h4 mb-1 text-primary">
+                            {{ in_progress_task_count }}
+                        </div>
+
+                        <div class="text-secondary">
+                            In progress
+                        </div>
+                    </div>
+
+                    <div class="col-4">
+                        <div class="h4 mb-1 text-success">
+                            {{ completed_task_count }}
+                        </div>
+
+                        <div class="text-secondary">
+                            Completed
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card summary-card h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Assessment summary</h2>
+
+                <div
+                    class="
+                        d-flex
+                        justify-content-between
+                        align-items-center
+                        border-bottom
+                        py-3
+                    "
+                >
+                    <span class="text-secondary">
+                        Total assessments
+                    </span>
+
+                    <strong>
+                        {{ total_assessment_count }}
+                    </strong>
+                </div>
+
+                <div
+                    class="
+                        d-flex
+                        justify-content-between
+                        align-items-center
+                        border-bottom
+                        py-3
+                    "
+                >
+                    <span class="text-secondary">
+                        Upcoming
+                    </span>
+
+                    <strong class="text-primary">
+                        {{ upcoming_assessment_count }}
+                    </strong>
+                </div>
+
+                <div
+                    class="
+                        d-flex
+                        justify-content-between
+                        align-items-center
+                        py-3
+                    "
+                >
+                    <span class="text-secondary">
+                        Completed
+                    </span>
+
+                    <strong class="text-success">
+                        {{ completed_assessment_count }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card summary-card h-100">

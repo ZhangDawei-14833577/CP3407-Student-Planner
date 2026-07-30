@@ -47,7 +47,7 @@ def register(request):
 
 @login_required
 def dashboard(request):
-    """Display academic information belonging to the current user."""
+    """Display academic progress for the logged-in user."""
 
     now = timezone.now()
     seven_days_later = now + timedelta(days=7)
@@ -62,6 +62,12 @@ def dashboard(request):
     ).select_related(
         "course",
         "assessment",
+    )
+
+    user_assessments = Assessment.objects.filter(
+        owner=request.user,
+    ).select_related(
+        "course",
     )
 
     incomplete_tasks = user_tasks.exclude(
@@ -81,22 +87,56 @@ def dashboard(request):
         due_date__lt=now,
     ).order_by("due_date")
 
-    upcoming_assessments = Assessment.objects.filter(
-        owner=request.user,
+    upcoming_assessments = user_assessments.filter(
         due_date__gte=now,
     ).exclude(
         status=Assessment.Status.COMPLETED,
-    ).select_related(
-        "course",
     ).order_by("due_date")[:5]
+
+    total_task_count = user_tasks.count()
+
+    completed_task_count = user_tasks.filter(
+        status=StudyTask.Status.COMPLETED,
+    ).count()
+
+    todo_task_count = user_tasks.filter(
+        status=StudyTask.Status.TODO,
+    ).count()
+
+    in_progress_task_count = user_tasks.filter(
+        status=StudyTask.Status.IN_PROGRESS,
+    ).count()
+
+    if total_task_count:
+        completion_rate = round(
+            completed_task_count / total_task_count * 100
+        )
+    else:
+        completion_rate = 0
+
+    total_assessment_count = user_assessments.count()
+
+    completed_assessment_count = user_assessments.filter(
+        status=Assessment.Status.COMPLETED,
+    ).count()
+
+    upcoming_assessment_count = user_assessments.filter(
+        due_date__gte=now,
+    ).exclude(
+        status=Assessment.Status.COMPLETED,
+    ).count()
 
     context = {
         "course_count": user_courses.count(),
-        "task_count": user_tasks.count(),
-        "completed_task_count": user_tasks.filter(
-            status=StudyTask.Status.COMPLETED,
-        ).count(),
+        "task_count": total_task_count,
+        "completed_task_count": completed_task_count,
+        "todo_task_count": todo_task_count,
+        "in_progress_task_count": in_progress_task_count,
         "overdue_task_count": overdue_tasks.count(),
+        "completion_rate": completion_rate,
+        "total_assessment_count": total_assessment_count,
+        "completed_assessment_count": completed_assessment_count,
+        "upcoming_assessment_count": upcoming_assessment_count,
         "tasks_due_today": tasks_due_today,
         "tasks_due_soon": tasks_due_soon[:5],
         "overdue_tasks": overdue_tasks[:5],
