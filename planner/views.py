@@ -5,6 +5,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.db.models import Q
 
 from .forms import (
     AssessmentForm,
@@ -370,7 +371,7 @@ def assessment_delete(request, pk):
 
 @login_required
 def task_list(request):
-    """Display and filter study tasks belonging to the user."""
+    """Display, search, filter and sort the user's study tasks."""
 
     tasks = StudyTask.objects.filter(
         owner=request.user,
@@ -379,9 +380,20 @@ def task_list(request):
         "assessment",
     )
 
+    search_query = request.GET.get("search", "").strip()
     selected_course = request.GET.get("course", "")
     selected_status = request.GET.get("status", "")
     selected_priority = request.GET.get("priority", "")
+    selected_sort = request.GET.get("sort", "due_asc")
+
+    if search_query:
+        tasks = tasks.filter(
+            Q(title__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(course__code__icontains=search_query)
+            | Q(course__name__icontains=search_query)
+            | Q(assessment__title__icontains=search_query)
+        )
 
     if selected_course.isdigit():
         tasks = tasks.filter(course_id=selected_course)
@@ -392,7 +404,19 @@ def task_list(request):
     if selected_priority in StudyTask.Priority.values:
         tasks = tasks.filter(priority=selected_priority)
 
-    tasks = tasks.order_by("due_date", "title")
+    sort_options = {
+        "due_asc": ("due_date", "title"),
+        "due_desc": ("-due_date", "title"),
+        "title_asc": ("title",),
+        "title_desc": ("-title",),
+        "newest": ("-created_at",),
+        "oldest": ("created_at",),
+    }
+
+    if selected_sort not in sort_options:
+        selected_sort = "due_asc"
+
+    tasks = tasks.order_by(*sort_options[selected_sort])
 
     courses = Course.objects.filter(
         owner=request.user,
@@ -404,9 +428,11 @@ def task_list(request):
         "courses": courses,
         "status_choices": StudyTask.Status.choices,
         "priority_choices": StudyTask.Priority.choices,
+        "search_query": search_query,
         "selected_course": selected_course,
         "selected_status": selected_status,
         "selected_priority": selected_priority,
+        "selected_sort": selected_sort,
     }
 
     return render(
