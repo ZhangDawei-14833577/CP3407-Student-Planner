@@ -384,6 +384,42 @@ class StudyTaskManagementTests(TestCase):
 
         self.assertIsNotNone(task.completed_at)
 
+    def test_completed_task_can_be_changed_to_in_progress(self):
+        task = StudyTask.objects.create(
+            owner=self.user,
+            course=self.course,
+            assessment=self.assessment,
+            title="Previously completed task",
+            priority=StudyTask.Priority.HIGH,
+            status=StudyTask.Status.COMPLETED,
+            completed_at=timezone.now(),
+        )
+
+        response = self.client.post(
+            reverse("task_update", args=[task.pk]),
+            {
+                "course": self.course.pk,
+                "assessment": self.assessment.pk,
+                "title": "Previously completed task",
+                "description": "",
+                "priority": StudyTask.Priority.HIGH,
+                "status": StudyTask.Status.IN_PROGRESS,
+                "start_date": "",
+                "due_date": "",
+                "estimated_hours": "1",
+            },
+        )
+
+        self.assertRedirects(response, reverse("task_list"))
+
+        task.refresh_from_db()
+
+        self.assertEqual(
+            task.status,
+            StudyTask.Status.IN_PROGRESS,
+        )
+        self.assertIsNone(task.completed_at)
+
 
 class SearchFilterSortTests(TestCase):
     """Automated tests for US-09."""

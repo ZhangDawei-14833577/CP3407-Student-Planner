@@ -552,7 +552,7 @@ def task_update(request, pk):
             task = form.save(commit=False)
             task.owner = request.user
 
-            _update_task_completion_time(task)
+            task.sync_completion_time()
 
             task.save()
 
