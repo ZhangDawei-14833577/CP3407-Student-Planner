@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -493,3 +494,100 @@ class SearchFilterSortTests(TestCase):
                 "Analyse data",
             ],
         )
+
+class QuickTaskCompletionTests(TestCase):
+    """TDD and mock tests for quick task completion."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="task_owner",
+            password="StrongPass123!",
+        )
+        self.other_user = User.objects.create_user(
+            username="other_student",
+            password="StrongPass123!",
+        )
+
+        self.course = Course.objects.create(
+            owner=self.owner,
+            code="CP3407",
+            name="Advanced Software Engineering",
+            color="#0D6EFD",
+        )
+
+        self.task = StudyTask.objects.create(
+            owner=self.owner,
+            course=self.course,
+            title="Complete automated testing",
+            priority=StudyTask.Priority.HIGH,
+            status=StudyTask.Status.TODO,
+            due_date=timezone.now() + timedelta(days=2),
+        )
+
+    def test_anonymous_user_is_redirected_to_login(self):
+        url = reverse(
+            "task_mark_complete",
+            args=[self.task.pk],
+        )
+
+        response = self.client.post(url)
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={url}",
+        )
+
+    @patch("planner.models.timezone.now")
+    def test_owner_can_mark_task_as_completed(self, mock_now):
+        fixed_time = timezone.make_aware(
+            datetime(2026, 7, 30, 9, 0)
+        )
+        mock_now.return_value = fixed_time
+
+        self.client.login(
+            username="task_owner",
+            password="StrongPass123!",
+        )
+
+        response = self.client.post(
+            reverse(
+                "task_mark_complete",
+                args=[self.task.pk],
+            )
+        )
+
+        self.assertRedirects(response, reverse("task_list"))
+
+        self.task.refresh_from_db()
+
+        self.assertEqual(
+            self.task.status,
+            StudyTask.Status.COMPLETED,
+        )
+        self.assertEqual(
+            self.task.completed_at,
+            fixed_time,
+        )
+
+    def test_user_cannot_complete_another_users_task(self):
+        self.client.login(
+            username="other_student",
+            password="StrongPass123!",
+        )
+
+        response = self.client.post(
+            reverse(
+                "task_mark_complete",
+                args=[self.task.pk],
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        self.task.refresh_from_db()
+
+        self.assertEqual(
+            self.task.status,
+            StudyTask.Status.TODO,
+        )
+        self.assertIsNone(self.task.completed_at)

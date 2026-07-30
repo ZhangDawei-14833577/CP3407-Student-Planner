@@ -67,4 +67,10 @@ urlpatterns = [
         views.task_delete,
         name="task_delete",
     ),
+
+    path(
+    "tasks/<int:pk>/complete/",
+    views.task_mark_complete,
+    name="task_mark_complete",
+),
 ]

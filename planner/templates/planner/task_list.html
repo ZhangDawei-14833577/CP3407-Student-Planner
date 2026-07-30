@@ -286,6 +286,23 @@
                             </td>
 
                             <td class="text-end">
+                                {% if task.status != "completed" %}
+                                    <form
+                                        method="post"
+                                        action="{% url 'task_mark_complete' task.pk %}"
+                                        class="d-inline"
+                                    >
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-outline-success btn-sm"
+                                        >
+                                            Mark complete
+                                        </button>
+                                    </form>
+                                {% endif %}
+
                                 <a
                                     class="btn btn-outline-primary btn-sm"
                                     href="{% url 'task_update' task.pk %}"

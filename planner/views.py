@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.db.models import Q
+from django.views.decorators.http import require_POST
 
 from .forms import (
     AssessmentForm,
@@ -605,3 +606,32 @@ def task_delete(request, pk):
         "planner/task_confirm_delete.html",
         {"task": task},
     )
+
+@login_required
+@require_POST
+def task_mark_complete(request, pk):
+    """Mark one of the current user's study tasks as completed."""
+
+    task = get_object_or_404(
+        StudyTask,
+        pk=pk,
+        owner=request.user,
+    )
+
+    task.status = StudyTask.Status.COMPLETED
+    task.sync_completion_time()
+
+    task.save(
+        update_fields=[
+            "status",
+            "completed_at",
+            "updated_at",
+        ]
+    )
+
+    messages.success(
+        request,
+        f"{task.title} was marked as completed.",
+    )
+
+    return redirect("task_list")
