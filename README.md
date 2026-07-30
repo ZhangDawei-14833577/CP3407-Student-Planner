@@ -99,6 +99,7 @@ This project is being developed by one student.
 
 - [Project Proposal](docs/Project_Proposal.md)
 - [Initial Backlog](docs/Initial_Backlog.md)
+- [System Testing Plan](docs/System_Testing_Plan.md)
 
 ## Running the Project Locally
 
