@@ -89,8 +89,11 @@ This project is being developed by one student.
 - [ ] Target-user interviews completed
 - [x] Iteration 1 started
 - [ ] Core application implemented
-- [ ] Automated testing completed
+- [x] Automated testing completed
 - [ ] Final application deployed
+- [x] 15 automated tests implemented
+- [x] All automated tests passing
+- [x] Test coverage measured at 83%
 
 ## Project Documentation
 
